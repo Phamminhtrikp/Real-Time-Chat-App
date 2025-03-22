@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import TextInput from "@/Components/TextInput";
 import ConversationItem from "@/Components/App/ConversationItem";
 import { MagnifyingGlassCircleIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
+import { useEventBus } from "@/EventBus";
 
 const ChatLayout = ({ children }) => {
     const page = usePage();
@@ -13,6 +14,7 @@ const ChatLayout = ({ children }) => {
     const [sortedConversations, setSortedConversations] = useState([]);
     // const [localselectedConversation, setLocalselectedConversation] = useState(selectedConversation);
     const [onlineUsers, setOnlineUsers] = useState({});
+    const { on } = useEventBus();
 
 
     const isUserOnline = (userId) => onlineUsers[userId];
@@ -26,6 +28,43 @@ const ChatLayout = ({ children }) => {
             })
         );
     }
+
+    const messageCreated = (message) => {
+        setLocalConversations((oldUsers) => {
+            return oldUsers.map((u) => {
+                // If the message is for user
+                if(
+                    message.receiverId && 
+                    !u.isGroup &&
+                    (u.id == message.senderId || u.id == message.receiverId)
+                ) {
+                    u.lastMessage = message.message;
+                    u.lastMessageDate = message.createdAt;
+                    return u;
+                }
+
+                // If the message is for group
+                if(
+                    message.groupId &&
+                    u.isGroup &&
+                    u.id == message.groupId
+                ) {
+                    u.lastMessage = message.message;
+                    u.lastMessageDate = message.createdAt;
+                    return u;
+                }
+                return u;
+            })
+        })
+    }
+
+    useEffect(() => {
+        const offCreated = on("message.created", messageCreated);
+
+        return () => {
+            offCreated();
+        }
+    }, [on]);
 
     useEffect(() => {
         setSortedConversations(
@@ -100,7 +139,7 @@ const ChatLayout = ({ children }) => {
 
     return (
         <>
-            <div className="flex-1 flex w-full h-full h-screen overflow-hidden pt-3 pl-2 gap-x-2">
+            <div className="flex-1 flex w-full h-[660px] h-screen overflow-hidden pt-3 pl-2 gap-x-2">
                 <div className={`transition-all w-full sm:w-[220px] md:w-[300px] bg-slate-800 flex flex-col overflow-hidden rounded-lg 
                     ${selectedConversation ? "-ml-[100%] sm:ml-0" : ""
                     }`}

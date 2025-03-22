@@ -89,7 +89,7 @@ class User extends Authenticatable
             'createdAt' => $this->created_at,
             'updatedAt' => $this->updated_at,
             'lastMessage' => $this->last_message,
-            'lastMessageDate' => $this->last_message_date,
+            'lastMessageDate' => $this->last_message_date ? ($this->last_message_date . ' UTC') : null,
             'blockedAt' => $this->blocked_at,
         ];
     }

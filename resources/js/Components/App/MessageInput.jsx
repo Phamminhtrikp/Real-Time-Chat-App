@@ -15,6 +15,10 @@ const MessageInput = ({ conversation = null }) => {
     const [messageSending, setMessageSending] = useState(false);
 
     const onSendClick = () => {
+        if(messageSending) {
+            return;
+        }
+        
         if (newMessage.trim() === "") {
             setInputErrorMessage("Please enter your message or upload attachments!");
 
@@ -85,7 +89,7 @@ const MessageInput = ({ conversation = null }) => {
                         onChange={(e) => setNewMessage(e.target.value)}
                     />
                     <button 
-                        onClick={onSendClick} 
+                        onClick={onSendClick}
                         className="btn btn-info rounded-l-none"
                     >
                         {messageSending && (

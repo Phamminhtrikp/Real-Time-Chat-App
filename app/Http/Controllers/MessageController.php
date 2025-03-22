@@ -32,7 +32,7 @@ class MessageController extends Controller
     }
 
     public function byGroup(Group $group) {
-        $messages = Message::where('group_id', $group->id)
+        $messages = Message::where('group_id', '=', $group->id)
             ->latest()
             ->paginate(10)
         ;
@@ -72,7 +72,7 @@ class MessageController extends Controller
         $data['sender_id'] = auth()->id();
         $receiverId = $data['receiver_id'] ?? null;
         $groupId =  $data['group_id'] ?? null;
-        
+        // dd([$data, $receiverId, $groupId]);
         $files = $data['attachments'] ?? [];
 
         $message = Message::create($data);

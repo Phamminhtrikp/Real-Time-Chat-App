@@ -6,10 +6,14 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ChatLayout from '@/Layouts/ChatLayout';
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/solid';
 import { Head } from '@inertiajs/react';
-import { useEffect, useRef, useState } from 'react';
+import axios from 'axios';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 function Home({ messages = null, selectedConversation = null }) {
     const [localMessages, setLocalMessages] = useState([]);
+    const [scrollFromBottom, setScrollFromBottom] = useState(0);
+    const [noMoreMessages, setNoMoreMessages] = useState(false);
+    const loadMoreIntersect = useRef(null);
     const messagesCtrRef = useRef(null);
 
     const { on } = useEventBus();
@@ -36,6 +40,35 @@ function Home({ messages = null, selectedConversation = null }) {
 
     }
 
+    const loadMoreMessages = useCallback(() => {
+        console.log(">> Load more messages >> ", noMoreMessages);
+        if(noMoreMessages) {
+            return;
+        }
+
+        // Find the first message object
+        const firstMessage = localMessages[0];
+        axios
+            .get(route("message.loadOlder", firstMessage.id))
+            .then(({ data }) => {
+                if(data.data.length === 0) {
+                    console.log(">> No More Messages");
+                    setNoMoreMessages(true);
+                    return;
+                }
+                // Calculate how much is scrolled from bottom and scroll to the same position from bottom after messages are loaded
+                const scrollHeight = messagesCtrRef.current.scrollHeight;
+                const scrollTop = messagesCtrRef.current.scrollTop;
+                const clientHeight = messagesCtrRef.current.clientHeight;
+                const tmpScrollFromBottom = scrollHeight - scrollTop - clientHeight;
+                console.log(">> tmpScrollFromBottom >>", tmpScrollFromBottom);
+                setScrollFromBottom(scrollHeight - scrollTop - clientHeight);
+
+                setLocalMessages((prevMessages) => {
+                    return [...data.data.reverse(), ...prevMessages];
+                })
+            });
+    }, [localMessages, noMoreMessages]);
 
     useEffect(() => {
         setTimeout(() => {
@@ -45,6 +78,9 @@ function Home({ messages = null, selectedConversation = null }) {
         }, 10);
 
         const offCreated = on("message.created", messageCreated);
+
+        setScrollFromBottom(0);
+        setNoMoreMessages(false);
 
         return () => {
             offCreated();
@@ -57,6 +93,40 @@ function Home({ messages = null, selectedConversation = null }) {
         setLocalMessages(messages ? messages.data.reverse() : []);
     }, [messages]);
 
+    useEffect(() => {
+        // Recover scroll from bottom after messages are loaded
+        if(messagesCtrRef.current && scrollFromBottom !== null) {
+            messagesCtrRef.current.scrollTop = 
+                messagesCtrRef.current.scrollHeight -
+                messagesCtrRef.current.offsetHeight -
+                scrollFromBottom;
+        }
+
+        if(noMoreMessages) {
+            return;
+        }
+
+        const observer = new IntersectionObserver(
+            (entries) =>
+                entries.forEach(
+                    (entry) => entry.isIntersecting && loadMoreMessages()
+                ),
+            {
+                rootMargin: "0px 0px 250px 0px",
+            }
+        );
+
+        if(loadMoreIntersect.current) {
+            setTimeout(() => {
+                observer.observe(loadMoreIntersect.current);
+            }, 100);
+        }
+
+        return () => {
+            observer.disconnect();
+        }
+
+    }, [localMessages]);
 
     return (
         <>
@@ -90,6 +160,7 @@ function Home({ messages = null, selectedConversation = null }) {
                         )}
                         {localMessages.length > 0 && (
                             <div className="flex flex-1 flex-col">
+                                <div ref={loadMoreIntersect}>{loadMoreIntersect && <span className='loading loading-snipper'></span>}</div>
                                 {localMessages.map((message) => (
                                     <MessageItem
                                         key={message.id}

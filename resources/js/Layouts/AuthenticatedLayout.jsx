@@ -38,7 +38,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     // console.log("SocketMessage", e);
                     const message = e.message;
                     // console.log("Message >> ", message)
-                    
+
                     // If the conversation with sender is not selected
                     // then show a notification
 
@@ -235,7 +235,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 </header>
             )}
 
-            <main>{children}</main>
+            {children}
         </div>
     );
 }
