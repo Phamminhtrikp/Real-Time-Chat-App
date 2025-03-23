@@ -8,6 +8,8 @@ import {
 } from "@heroicons/react/24/solid";
 import NewMessageInput from "./NewMessageInput";
 import axios from "axios";
+import EmojiPicker from "emoji-picker-react";
+import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 
 const MessageInput = ({ conversation = null }) => {
     const [newMessage, setNewMessage] = useState("");
@@ -15,10 +17,10 @@ const MessageInput = ({ conversation = null }) => {
     const [messageSending, setMessageSending] = useState(false);
 
     const onSendClick = () => {
-        if(messageSending) {
+        if (messageSending) {
             return;
         }
-        
+
         if (newMessage.trim() === "") {
             setInputErrorMessage("Please enter your message or upload attachments!");
 
@@ -51,14 +53,33 @@ const MessageInput = ({ conversation = null }) => {
                 console.log(">> progress: ", progress);
             }
         })
-        .then((res) => {
-            setNewMessage("");
-            setMessageSending(false);
-        })
-        .catch((err) => {
-            setMessageSending(false);
-        })
+            .then((res) => {
+                setNewMessage("");
+                setMessageSending(false);
+            })
+            .catch((err) => {
+                setMessageSending(false);
+            })
     }
+
+    const onLikeClick = () => {
+        if (messageSending) {
+            return;
+        }
+
+        const data = {
+            message: "👍",
+        };
+
+        if (conversation.isUser) {
+            data["receiver_id"] = conversation.id;
+        } else if (conversation.isGroup) {
+            data["group_id"] = conversation.id;
+        }
+
+        axios.post(route("message.store"), data);
+    };
+
 
     return (
         <div className="flex flex-wrap items-start border-t border-slate-700 py-3">
@@ -88,7 +109,7 @@ const MessageInput = ({ conversation = null }) => {
                         onSend={onSendClick}
                         onChange={(e) => setNewMessage(e.target.value)}
                     />
-                    <button 
+                    <button
                         onClick={onSendClick}
                         className="btn btn-info rounded-l-none"
                     >
@@ -104,10 +125,24 @@ const MessageInput = ({ conversation = null }) => {
                     <p className="text-xs text-red-400">{inputErrorMessage}</p>
                 )}
             </div>
+
             <div className="order-3 xs:order-3 flex p-2">
-                <button className="p-1 text-gray-400 hover:text-gray-300">
-                    <FaceSmileIcon className="w-6 h6" />
-                </button><button className="p-1 text-gray-400 hover:text-gray-300">
+                <Popover className="relative">
+                    <PopoverButton className="p-1 text-gray-400 hover:text-gray-300">
+                        <FaceSmileIcon className="w-6 h6" />
+                    </PopoverButton>
+                    <PopoverPanel className="absolute z-10 right-0 bottom-full" >
+                        <EmojiPicker
+                            theme="dark"
+                            onEmojiClick={(ev) =>
+                                setNewMessage(newMessage + ev.emoji)
+                            }
+                        >
+
+                        </EmojiPicker>
+                    </PopoverPanel>
+                </Popover>
+                <button onClick={onLikeClick} className="p-1 text-gray-400 hover:text-gray-300">
                     <HandThumbUpIcon className="w-6 h6" />
                 </button>
             </div>
