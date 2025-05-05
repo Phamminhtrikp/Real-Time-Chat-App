@@ -21,30 +21,27 @@ function Home({ messages = null, selectedConversation = null }) {
     const { on } = useEventBus();
 
     const messageCreated = (message) => {
-        if(
-            selectedConversation && 
-            selectedConversation.isGroup && 
+        if (
+            selectedConversation &&
+            selectedConversation.isGroup &&
             selectedConversation.id == message.groupId
         ) {
-            // console.log(">> Group message detected");
             setLocalMessages((prevMessages) => [...prevMessages, message]);
         }
 
-        if(
-            selectedConversation && 
+        if (
+            selectedConversation &&
             selectedConversation.isUser && (
-            selectedConversation.id == message.senderId ||
-            selectedConversation.id == message.receiverId)
+                selectedConversation.id == message.senderId ||
+                selectedConversation.id == message.receiverId)
         ) {
-            // console.log(">> Direct message detected");
             setLocalMessages((prevMessages) => [...prevMessages, message]);
         }
 
     }
 
     const loadMoreMessages = useCallback(() => {
-        console.log(">> Load more messages >> ", noMoreMessages);
-        if(noMoreMessages) {
+        if (noMoreMessages) {
             return;
         }
 
@@ -53,8 +50,7 @@ function Home({ messages = null, selectedConversation = null }) {
         axios
             .get(route("message.loadOlder", firstMessage.id))
             .then(({ data }) => {
-                if(data.data.length === 0) {
-                    console.log(">> No More Messages");
+                if (data.data.length === 0) {
                     setNoMoreMessages(true);
                     return;
                 }
@@ -63,8 +59,7 @@ function Home({ messages = null, selectedConversation = null }) {
                 const scrollTop = messagesCtrRef.current.scrollTop;
                 const clientHeight = messagesCtrRef.current.clientHeight;
                 const tmpScrollFromBottom = scrollHeight - scrollTop - clientHeight;
-                console.log(">> tmpScrollFromBottom >>", tmpScrollFromBottom);
-                setScrollFromBottom(scrollHeight - scrollTop - clientHeight);
+                setScrollFromBottom(tmpScrollFromBottom);
 
                 setLocalMessages((prevMessages) => {
                     return [...data.data.reverse(), ...prevMessages];
@@ -83,7 +78,7 @@ function Home({ messages = null, selectedConversation = null }) {
 
     useEffect(() => {
         setTimeout(() => {
-            if(messagesCtrRef.current) {
+            if (messagesCtrRef.current) {
                 messagesCtrRef.current.scrollTop = messagesCtrRef.current.scrollHeight;
             }
         }, 10);
@@ -106,14 +101,14 @@ function Home({ messages = null, selectedConversation = null }) {
 
     useEffect(() => {
         // Recover scroll from bottom after messages are loaded
-        if(messagesCtrRef.current && scrollFromBottom !== null) {
-            messagesCtrRef.current.scrollTop = 
+        if (messagesCtrRef.current && scrollFromBottom !== null) {
+            messagesCtrRef.current.scrollTop =
                 messagesCtrRef.current.scrollHeight -
                 messagesCtrRef.current.offsetHeight -
                 scrollFromBottom;
         }
 
-        if(noMoreMessages) {
+        if (noMoreMessages) {
             return;
         }
 
@@ -127,7 +122,7 @@ function Home({ messages = null, selectedConversation = null }) {
             }
         );
 
-        if(loadMoreIntersect.current) {
+        if (loadMoreIntersect.current) {
             setTimeout(() => {
                 observer.observe(loadMoreIntersect.current);
             }, 100);

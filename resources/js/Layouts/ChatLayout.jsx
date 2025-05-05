@@ -33,8 +33,8 @@ const ChatLayout = ({ children }) => {
         setLocalConversations((oldUsers) => {
             return oldUsers.map((u) => {
                 // If the message is for user
-                if(
-                    message.receiverId && 
+                if (
+                    message.receiverId &&
                     !u.isGroup &&
                     (u.id == message.senderId || u.id == message.receiverId)
                 ) {
@@ -44,7 +44,7 @@ const ChatLayout = ({ children }) => {
                 }
 
                 // If the message is for group
-                if(
+                if (
                     message.groupId &&
                     u.isGroup &&
                     u.id == message.groupId
@@ -100,10 +100,9 @@ const ChatLayout = ({ children }) => {
     useEffect(() => {
         Echo.join('online')
             .here((users) => {
-                // console.log('here', users);
                 const onlineUsersObj = Object.fromEntries(
                     users.map((user) => {
-                       return [user.id, user]
+                        return [user.id, user]
                     })
                 );
 
@@ -112,7 +111,6 @@ const ChatLayout = ({ children }) => {
                 });
             })
             .joining((user) => {
-                // console.log('joining', user);
                 setOnlineUsers((prevOnlineUsers) => {
                     const updatedUsers = { ...prevOnlineUsers };
                     updatedUsers[user.id] = user;
@@ -121,7 +119,6 @@ const ChatLayout = ({ children }) => {
                 });
             })
             .leaving((user) => {
-                // console.log('leaving', user);
                 setOnlineUsers((prevOnlineUsers) => {
                     const updatedUsers = { ...prevOnlineUsers };
                     delete updatedUsers[user.id];
@@ -139,7 +136,7 @@ const ChatLayout = ({ children }) => {
 
     return (
         <>
-            <div className="flex-1 flex w-full h-[650px] h-screen overflow-hidden pt-3 pl-2 gap-x-2">
+            <div className="flex-1 flex w-full h-screen overflow-hidden pt-3 pl-2 gap-x-2">
                 <div className={`transition-all w-full sm:w-[220px] md:w-[300px] bg-slate-800 flex flex-col overflow-hidden rounded-lg 
                     ${selectedConversation ? "-ml-[100%] sm:ml-0" : ""
                     }`}
@@ -148,13 +145,13 @@ const ChatLayout = ({ children }) => {
                         My Conversations
                         <div className="tooltip tooltip-left" data-tip="Create New Group">
                             <button className="text-gray-400 hover:text-gray-200">
-                                <PencilSquareIcon className="w-4 h-4 inline-block ml-2" /> 
+                                <PencilSquareIcon className="w-4 h-4 inline-block ml-2" />
                             </button>
                         </div>
                     </div>
 
                     <div className="px-3">
-                        <TextInput 
+                        <TextInput
                             onKeyUp={onSearch}
                             placeholder="Filter users and groups"
                             className="w-full"
@@ -162,13 +159,13 @@ const ChatLayout = ({ children }) => {
                     </div>
 
                     <div className="flex-1 overflow-auto">
-                        { sortedConversations && sortedConversations.map((conversation) => (
-                                <ConversationItem
-                                    key={`${conversation.isGroup ? "group_" : "user_"}${conversation.id}`}
-                                    conversation={conversation}
-                                    online={!!isUserOnline(conversation.id)}
-                                    selectedConversation={selectedConversation}
-                                />
+                        {sortedConversations && sortedConversations.map((conversation) => (
+                            <ConversationItem
+                                key={`${conversation.isGroup ? "group_" : "user_"}${conversation.id}`}
+                                conversation={conversation}
+                                online={!!isUserOnline(conversation.id)}
+                                selectedConversation={selectedConversation}
+                            />
                         ))}
                     </div>
 

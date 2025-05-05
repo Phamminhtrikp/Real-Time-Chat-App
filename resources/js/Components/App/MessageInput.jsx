@@ -55,12 +55,6 @@ const MessageInput = ({ conversation = null }) => {
             }, 3000);
             return;
         }
-        // if(conversation.isUser) {
-        //     console.log(">> uid: ", conversation.id)
-        // }
-        // if (conversation.isGroup) {
-        //     console.log(">> group_id", conversation.id);
-        // }
 
         const formData = new FormData();
         chosenFiles.forEach((file) => {
@@ -79,7 +73,6 @@ const MessageInput = ({ conversation = null }) => {
                 const progress = Math.round(
                     (ProgressEvent.loaded / ProgressEvent.total) * 100
                 );
-                console.log(">> progress: ", progress);
                 setUploadProgress(progress);
             }
         })

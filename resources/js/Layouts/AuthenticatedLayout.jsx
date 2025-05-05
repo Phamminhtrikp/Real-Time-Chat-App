@@ -30,16 +30,13 @@ export default function AuthenticatedLayout({ header, children }) {
                     .sort((a, b) => a - b)
                     .join("-")}`;
             }
-            // console.log(">> Start listening on channel", channel);
 
             Echo.private(channel)
                 .error((error) => {
                     console.log(error);
                 })
                 .listen("SocketMessage", (e) => {
-                    // console.log("SocketMessage", e);
                     const message = e.message;
-                    // console.log("Message >> ", message)
 
                     // If the conversation with sender is not selected
                     // then show a notification
