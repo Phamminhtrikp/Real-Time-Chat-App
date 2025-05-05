@@ -15,6 +15,7 @@ import { isAudio, isImage } from "@/helpers";
 import AttachmentPreview from "./AttachmentPreview";
 import CustomAudioPlayer from "./CustomAudioPlayer";
 import { v4 as uuidv4 } from 'uuid';
+import AudioRecorder from "./AudioRecorder";
 
 const MessageInput = ({ conversation = null }) => {
     const [newMessage, setNewMessage] = useState("");
@@ -116,6 +117,19 @@ const MessageInput = ({ conversation = null }) => {
         axios.post(route("message.store"), data);
     };
 
+    const recordedAudioReady = (file, url) => {
+        setChosenFiles((prevFiles) => {
+            return [
+                ...prevFiles,
+                {
+                    id: uuidv4(),
+                    file: file,
+                    url: url,
+                }
+            ];
+        })
+    };
+
 
     return (
         <div className="flex flex-wrap items-start border-t border-slate-700 py-3">
@@ -139,6 +153,8 @@ const MessageInput = ({ conversation = null }) => {
                         className="absolute w-8 h-8 left-0 top-0 bottom-0 z-20 opacity-0 cursor-pointer"
                     />
                 </button>
+
+                <AudioRecorder fileReady={recordedAudioReady} />
             </div>
             <div className="order-1 px-3 xs:p-0 min-w-[220px] basis-full xs:basis-0 xs:order-2 flex-1 relative">
                 <div className="flex">
@@ -181,9 +197,9 @@ const MessageInput = ({ conversation = null }) => {
                         >
                             {isImage(file.file) && (
                                 <img
-                                    src={file.url} 
-                                    alt="" 
-                                    className="w-16 h-16 object-cover" 
+                                    src={file.url}
+                                    alt=""
+                                    className="w-16 h-16 object-cover"
                                 />
                             )}
                             {isAudio(file.file) && (
@@ -198,7 +214,7 @@ const MessageInput = ({ conversation = null }) => {
                             )}
 
                             <button
-                                onClick={() => 
+                                onClick={() =>
                                     setChosenFiles(
                                         chosenFiles.filter((f) => f.id !== file.id)
                                     )
