@@ -1,3 +1,4 @@
+import AttachmentPreviewModal from '@/Components/App/AttachmentPreviewModal';
 import ConversationHeader from '@/Components/App/ConverstationHeader';
 import MessageInput from '@/Components/App/MessageInput';
 import MessageItem from '@/Components/App/MessageItem';
@@ -5,7 +6,6 @@ import { useEventBus } from '@/eventBus';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ChatLayout from '@/Layouts/ChatLayout';
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/solid';
-import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -15,6 +15,8 @@ function Home({ messages = null, selectedConversation = null }) {
     const [noMoreMessages, setNoMoreMessages] = useState(false);
     const loadMoreIntersect = useRef(null);
     const messagesCtrRef = useRef(null);
+    const [showAttachmentPreview, setShowAttachmentPreview] = useState(false);
+    const [previewAttachment, setPreviewAttachment] = useState({});
 
     const { on } = useEventBus();
 
@@ -69,6 +71,15 @@ function Home({ messages = null, selectedConversation = null }) {
                 })
             });
     }, [localMessages, noMoreMessages]);
+
+
+    const onAttachmentClick = (attachments, ind) => {
+        setPreviewAttachment({
+            attachments,
+            ind,
+        });
+        setShowAttachmentPreview(true);
+    }
 
     useEffect(() => {
         setTimeout(() => {
@@ -165,6 +176,7 @@ function Home({ messages = null, selectedConversation = null }) {
                                     <MessageItem
                                         key={message.id}
                                         message={message}
+                                        attachmentClick={onAttachmentClick}
                                     />
                                 ))}
                             </div>
@@ -173,6 +185,15 @@ function Home({ messages = null, selectedConversation = null }) {
 
                     <MessageInput conversation={selectedConversation} />
                 </>
+            )}
+
+            {previewAttachment.attachments && (
+                <AttachmentPreviewModal
+                    attachments={previewAttachment.attachments}
+                    index={previewAttachment.ind}
+                    show={showAttachmentPreview}
+                    onClose={() => setShowAttachmentPreview(false)}
+                />
             )}
         </>
     );
