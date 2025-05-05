@@ -16,14 +16,14 @@ use Illuminate\Support\Str;
 
 class MessageController extends Controller
 {
-    public function byUser(User $user) {
+    public function byUser(User $user)
+    {
         $messages = Message::where('sender_id', '=', auth()->id())
             ->where('receiver_id', '=', $user->id)
             ->orWhere('sender_id', '=', $user->id)
             ->where('receiver_id', '=', auth()->id())
             ->latest()
-            ->paginate(10)
-        ;
+            ->paginate(10);
 
         return inertia('Home', [
             'selectedConversation' => $user->toConversationArray(),
@@ -31,11 +31,11 @@ class MessageController extends Controller
         ]);
     }
 
-    public function byGroup(Group $group) {
+    public function byGroup(Group $group)
+    {
         $messages = Message::where('group_id', '=', $group->id)
             ->latest()
-            ->paginate(10)
-        ;
+            ->paginate(10);
 
         return inertia('Home', [
             'selectedConversation' => $group->toConversationArray(),
@@ -43,31 +43,31 @@ class MessageController extends Controller
         ]);
     }
 
-    public function loadOlder(Message $message) {
+    public function loadOlder(Message $message)
+    {
         // Load older messages that are older than the given message, sort them by lastest
-        if($message->group_id) {
+        if ($message->group_id) {
             $message = Message::where('created_at', '<', $message->created_at)
                 ->where('group_id', $message->group_id)
                 ->latest()
-                ->paginate(10)
-            ;
+                ->paginate(10);
         } else {
             $message = Message::where('created_at', '<', $message->created_at)
-                ->where(function($query) use($message) {
+                ->where(function ($query) use ($message) {
                     $query->where('sender_id', $message->sender_id)
                         ->where('receiver_id', $message->receiver_id)
                         ->orWhere('sender_id', $message->receiver_id)
                         ->where('receiver_id', $message->sender_id);
                 })
                 ->latest()
-                ->paginate(10)
-            ;
+                ->paginate(10);
         }
 
         return MessageResource::collection($message);
     }
 
-    public function store(StoreMessageRequest $request) {
+    public function store(StoreMessageRequest $request)
+    {
         $data = $request->validated();
         $data['sender_id'] = auth()->id();
         $receiverId = $data['receiver_id'] ?? null;
@@ -78,8 +78,8 @@ class MessageController extends Controller
         $message = Message::create($data);
 
         $attachments = [];
-        if($files) {
-            foreach($files as $file) {
+        if ($files) {
+            foreach ($files as $file) {
                 $directory = 'attachments/' . Str::random(32);
                 Storage::makeDirectory($directory);
 
@@ -97,11 +97,11 @@ class MessageController extends Controller
             $message->attachments = $attachments;
         }
 
-        if($receiverId) {
+        if ($receiverId) {
             Conversation::updateConversationWithMessage(auth()->id(), $receiverId,  $message);
         }
 
-        if($groupId) {
+        if ($groupId) {
             Group::updateGroupWithMessage($groupId, $message);
         }
 
@@ -110,14 +110,35 @@ class MessageController extends Controller
         return new MessageResource($message);
     }
 
-    public function destroy(Message $message) {
+    public function destroy(Message $message)
+    {
         // Check if the user is the owner of the message
-        if($message->sender_id !== auth()->id()) {
+        if ($message->sender_id !== auth()->id()) {
             return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $group = null;
+        $conversation = null;
+
+        // Check if the message is the group message
+        if ($message->group_id) {
+            $group = Group::where('last_message_id', $message->id)->first();
+        } else {
+            $conversation = Conversation::where('last_message_id', $message->id)->first();
         }
 
         $message->delete();
 
-        return response("", 204);
+        if ($group) {
+            // Repopulate $group with latest database data
+            $group = Group::find($group->id);
+            $lastMessage = $group->lastMessage;
+        } else if ($conversation) {
+            // Repopulate $conversation with latest database data
+            $conversation = Conversation::find($conversation->id);
+            $lastMessage = $conversation->lastMessage;
+        }
+
+        return response()->json(['message' => $lastMessage ? new MessageResource($lastMessage) : null]);
     }
 }
